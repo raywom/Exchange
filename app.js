@@ -4,7 +4,7 @@ const request = require('request');
 var oxr = require('open-exchange-rates');
 oxr.set({ app_id: '9d293f0b64f94f6898e02a298c670b3d&show_alternative=1' })
 // replace the value below with the Telegram token you receive from @BotFather
-
+var dublicatedanswer;
 var allrates;
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
@@ -411,14 +411,26 @@ function coin(){
   });
 }
 function rates(){
-  bot.sendMessage(chatId, 'Отобразить все курсы', {
+  let ld=``;
+    var flex1;
+    flex = oxr.latest(function() {
+      flex1=oxr.rates;
+      var string="";
+      for(var flex2 in flex1) {
+          var value = flex1[flex2];
+          var value2 = flex2;
+          string += "1 USD =" + value +" "+ value2 + "\n";
+      }
+      let ld = `
+        * ${string}*
+      `
+      console.dir("show all rates");
+  if(ld!=dublicatedanswer){
+  bot.sendMessage(chatId, 'Вот курс доллара к другим валютам(основным и альтернативным):\n'+ld, {
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: 'Отобразить нынешние',
-                callback_data: 'all_rates'
-              }, {
                 text: 'Назад',
                 callback_data: 'menu'
               },
@@ -426,6 +438,9 @@ function rates(){
           ]
         }
       });
+      dublicatedanswer=ld;
+    }
+  });
 }
 bot.onText(/\/rates/, (msg, match) => {
   chatId = msg.chat.id;
@@ -445,7 +460,7 @@ bot.onText(/\/rates/, (msg, match) => {
         }
       });
     });
-function forex(){
+function forex(chatId){
 bot.sendMessage(chatId, 'Выберите какая валюта вас интересует', {
       reply_markup: {
         inline_keyboard: [
@@ -618,13 +633,10 @@ bot.on('callback_query', query => {
     nxt();
   }
   if(query.data=="forex"){
-    forex();
+    forex(chatId);
   }
   if(query.data=="coin"){
     coin();
-  }
-  if(query.data=="all_rates"){
-
   }
   const id = query.message.chat.id;
   name = query.data;
@@ -633,29 +645,19 @@ bot.on('callback_query', query => {
       * ${"1 USD "} ${flag["USD"]}💱 ${oxr.rates[name]} ${name+' '} ${flag[name]}*
     `;
     console.dir(oxr.rates[name]);
-    if(oxr.rates==undefined || oxr.rates[name]==undefined){
-
+    if(oxr.rates==undefined || oxr.rates[name]==undefined && name!="all_rates"){
+      console.dir("error")
     }
-    if(query.data=="all_rates"){
-      var flex1;
-      flex = oxr.latest(function() {
-        flex1=oxr.rates;
-        var string="";
-        for(var flex2 in flex1) {
-            var value = flex1[flex2];
-            var value2 = flex2;
-            string += "1 USD =" + value +" "+ value2 + "\n";
-        }
-        let ld = `
-          * ${string}*
-        `
-        bot.sendMessage(id, ld, {parse_mode: 'Markdown'});
-      });
-
+    else if(query.data=="all_rates"){
+      rates();
     }
     else{
-      console.dir("ne flexing");
-      bot.sendMessage(id, md, {parse_mode: 'Markdown'});
+      console.dir("basic answer");
+      if(md!=dublicatedanswer){
+        bot.sendMessage(id, md, {parse_mode: 'Markdown'});
+        dublicatedanswer=md;
+      }
+
   }
   });
 
